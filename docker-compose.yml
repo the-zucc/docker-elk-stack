@@ -1,0 +1,49 @@
+version: '3'
+services:
+
+  #Kibana node
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.5.1
+    volumes:
+      - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    environment:
+      SERVER_NAME: kibana.example.org
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    
+    networks:
+      elk-network:
+    ports:
+      - 5601:5601
+
+  #Elasticsearch node
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
+    volumes:
+      - ./elasticsearch:/var/lib/elasticsearch/data
+    environment:
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+      discovery.type: single-node
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+    networks:
+      elk-network:
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+  #Logstash node
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.5.1
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline/
+      - ./logstash/config:/usr/share/logstash/config/
+    
+    networks:
+      elk-network:
+
+networks:
+  elk-network:
+    driver: bridge
